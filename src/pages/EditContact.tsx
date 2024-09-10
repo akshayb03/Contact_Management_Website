@@ -31,11 +31,12 @@ export const EditContact = () => {
     }
   }, [existingContact]);
   return (
-    <div className="flex flex-col items-center pt-20 w-1/2">
+    <div className="flex flex-col items-center pt-20 w-full lg:w-1/2">
       <p className="text-2xl font-bold mb-4">Edit Contact Screen</p>
       <Form changeHandler={handleChange} newContact={newContact} />
-      <div className="pt-6"></div>
+      <div className="pt-6" />
       <ContactButton text={"Edit Contact"} clickHandler={updateContact} />
+      <div className="h-12" />
     </div>
   );
 };

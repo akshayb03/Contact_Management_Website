@@ -15,6 +15,7 @@ export const EmptyList = () => {
           <p>Please add contact from Create contact button</p>
         </div>
       </div>
+      <div className="h-12" />
     </div>
   );
 };
