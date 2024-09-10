@@ -1,5 +1,6 @@
 import { Line } from "react-chartjs-2";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import {
   Chart as ChartJS,
@@ -11,6 +12,8 @@ import {
   Legend,
   Tooltip,
 } from "chart.js";
+import { Loader } from "./Loader";
+import { ErrorMessage } from "./ErrorMessage";
 
 ChartJS.register(
   CategoryScale,
@@ -28,40 +31,54 @@ interface HistoricalData {
   recovered: Record<string, number>;
 }
 
+const fetchData = async () => {
+  const result = await axios.get<HistoricalData>(
+    "https://disease.sh/v3/covid-19/historical/all?lastdays=all"
+  );
+  return result.data;
+};
+
 export const LineChart = () => {
-  const [data, setData] = useState<{ dates: string[]; cases: number[] }>({
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["covid-data"],
+    queryFn: fetchData,
+  });
+  console.log("data", data);
+  const [chartData, setChartData] = useState<{
+    dates: string[];
+    cases: number[];
+  }>({
     dates: [],
     cases: [],
   });
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const result = await axios.get<HistoricalData>(
-          "https://disease.sh/v3/covid-19/historical/all?lastdays=all"
-        );
-        const cases = result.data.cases;
-        const dates = Object.keys(cases);
-        const caseCounts = Object.values(cases);
+    if (data) {
+      const cases = data.cases;
+      const dates = Object.keys(cases);
+      const caseCounts = Object.values(cases);
 
-        setData({ dates: dates, cases: caseCounts });
-      } catch (error) {
-        console.error("Error", error);
-      }
-    };
+      setChartData({ dates: dates, cases: caseCounts });
+    }
+  }, [data]);
 
-    fetchData();
-  }, []);
+  if (isLoading) {
+    return <Loader />;
+  }
+
+  if (error) {
+    return <ErrorMessage msg={error.message} />;
+  }
 
   return (
     <div className="w-full p-9 flex justify-center">
       <Line
         data={{
-          labels: data.dates,
+          labels: chartData.dates,
           datasets: [
             {
               label: "Cases Over Time",
-              data: data.cases,
+              data: chartData.cases,
               borderColor: "black",
               borderWidth: 1,
               pointRadius: 1,

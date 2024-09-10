@@ -3,8 +3,11 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Country } from "../utils/utils";
+import { useQuery } from "@tanstack/react-query";
 
 import L from "leaflet";
+import { ErrorMessage } from "./ErrorMessage";
+import { Loader } from "./Loader";
 
 const customIcon = L.icon({
   iconUrl: require("leaflet/dist/images/marker-icon.png"),
@@ -15,18 +18,31 @@ const customIcon = L.icon({
   shadowSize: [41, 41],
 });
 
+const fetchData = async () => {
+  const result = await axios("https://disease.sh/v3/covid-19/countries");
+  return result.data;
+};
+
 export const Map = () => {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["map"],
+    queryFn: fetchData,
+  });
   const [countries, setCountries] = useState<Country[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const result = await axios("https://disease.sh/v3/covid-19/countries");
-      console.log("result", result);
-      setCountries(result.data);
-    };
+    if (data) {
+      setCountries(data);
+    }
+  }, [data]);
 
-    fetchData();
-  }, []);
+  if (isLoading) {
+    return <Loader />;
+  }
+
+  if (error) {
+    return <ErrorMessage msg={error.message} />;
+  }
 
   return (
     <MapContainer center={[20, 30]} zoom={3}>
